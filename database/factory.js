@@ -1,7 +1,5 @@
 'use strict'
 
-const Factory = require('@adonisjs/lucid/src/Factory')
-
 /*
 |--------------------------------------------------------------------------
 | Factory
