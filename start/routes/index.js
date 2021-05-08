@@ -16,7 +16,7 @@
 /** @type {typeof import('@adonisjs/framework/src/Route/Manager')} */
 const Route = use('Route')
 
-Route.get('/', () => {
+Route.post('/', () => {
   return { greeting: 'Hello world in JSON' }
 })
 
