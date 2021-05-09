@@ -20,7 +20,7 @@ class ProductController {
    */
   async index({ request, response, pagination }) {
     const name = request.input('name')
-    const product = Product.query()
+    const query = Product.query()
     if (name) {
       query.where('name', 'LIKE', `%${name}%`)
     }
