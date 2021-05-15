@@ -7,7 +7,14 @@ Route.group(() => {
   /**
    * Categories resoures routes
    */
-  Route.resource('categories', 'CategoryController').apiOnly()
+  Route.resource('categories', 'CategoryController')
+    .apiOnly()
+    .validator(
+      new Map([
+        [['categories.store'], ['Admin/StoreCategory']],
+        [['categories.update'], ['Admin/StoreCategory']],
+      ])
+    )
 
   /**
    * Categories resoures routes
@@ -24,7 +31,9 @@ Route.group(() => {
    */
   Route.post('orders/:id/discount', 'OrderController.applyDiscount')
   Route.delete('orders/:id/discount', 'OrderController.removeDiscount')
-  Route.resource('orders', 'OrderController').apiOnly()
+  Route.resource('orders', 'OrderController')
+    .apiOnly()
+    .validator(new Map([[['orders.store', 'Admin/StoreOrder']]]))
 
   /**
    * Image resoures routes
@@ -38,3 +47,4 @@ Route.group(() => {
 })
   .prefix('v1/admin')
   .namespace('Admin')
+  .middleware(['auth', 'is:( admin || manager )'])
