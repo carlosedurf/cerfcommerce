@@ -8,6 +8,14 @@ class Login {
       password: 'required',
     }
   }
+
+  get messages() {
+    return {
+      'email.required': 'O email é obrigatório!',
+      'email.email': 'O email já existe!',
+      'password.required': 'A senha é obrigatória!',
+    }
+  }
 }
 
 module.exports = Login
