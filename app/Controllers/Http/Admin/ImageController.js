@@ -7,6 +7,7 @@
 const Image = use('App/Models/Image')
 const { manage_single_upload, manage_multiple_uploads } = use('App/Helpers')
 const fs = use('fs')
+const Transformer = use('App/Transformers/Admin/ImageTransformer')
 
 /**
  * Resourceful controller for interacting with images
@@ -17,14 +18,16 @@ class ImageController {
    * GET images
    *
    * @param {object} ctx
-   * @param {Request} ctx.request
    * @param {Response} ctx.response
+   * @param {object} ctx.paginatio
+   * @param {TransformWith} ctx.transform
    */
-  async index({ request, response, pagination }) {
-    let images = await Image.query()
+  async index({ response, pagination, transform }) {
+    var images = await Image.query()
       .orderBy('id', 'DESC')
       .paginate(pagination.page, pagination.limit)
 
+    images = await transform.paginate(images, Transformer)
     return response.send(images)
   }
 
@@ -35,8 +38,9 @@ class ImageController {
    * @param {object} ctx
    * @param {Request} ctx.request
    * @param {Response} ctx.response
+   * @param {TransformWith} ctx.transform
    */
-  async store({ request, response }) {
+  async store({ request, response, transform }) {
     try {
       // Captura uma image ou mais do request
       const fileJar = request.file('images', {
@@ -51,14 +55,16 @@ class ImageController {
       if (!fileJar.files) {
         const file = await manage_single_upload(fileJar)
         if (file.moved()) {
-          const image = await Image.create({
+          var image = await Image.create({
             path: file.fileName,
             size: file.size,
             original_name: file.clientName,
             extension: file.subtytpe,
           })
 
-          images.push(image)
+          const transformedImage = await transform.item(image, Transformer)
+
+          images.push(transformedImage)
 
           return response.status(201).send({ successess: images, errors: {} })
         }
@@ -73,14 +79,16 @@ class ImageController {
 
       await Promise.all(
         files.successess.map(async file => {
-          const image = await Image.create({
+          var image = await Image.create({
             path: file.fileName,
             size: file.size,
             original_name: file.clientName,
             extension: file.subtytpe,
           })
 
-          images.push(images)
+          const transformedImage = await transform.item(image, Transformer)
+
+          images.push(transformedImage)
         })
       )
 
@@ -99,12 +107,12 @@ class ImageController {
    * GET images/:id
    *
    * @param {object} ctx
-   * @param {Request} ctx.request
    * @param {Response} ctx.response
-   * @param {View} ctx.view
+   * @param {TransformWith} ctx.transform
    */
-  async show({ params: { id }, request, response, view }) {
-    const image = await Image.findOrFail(id)
+  async show({ params: { id }, response, transform }) {
+    var image = await Image.findOrFail(id)
+    image = await transform.item(image, Transformer)
     return response.send(image)
   }
 
@@ -115,13 +123,14 @@ class ImageController {
    * @param {object} ctx
    * @param {Request} ctx.request
    * @param {Response} ctx.response
+   * @param {TransformWith} ctx.transform
    */
-  async update({ params: { id }, request, response }) {
-    const image = await Image.findOrFail(id)
+  async update({ params: { id }, request, response, transform }) {
+    var image = await Image.findOrFail(id)
     try {
       image.merge(request.only(['original_name']))
       await image.save()
-
+      image = await transform.item(image, Transformer)
       return response.status(200).send(image)
     } catch (error) {
       return response.status(400).send({
@@ -135,10 +144,9 @@ class ImageController {
    * DELETE images/:id
    *
    * @param {object} ctx
-   * @param {Request} ctx.request
    * @param {Response} ctx.response
    */
-  async destroy({ params: { id }, request, response }) {
+  async destroy({ params: { id }, response }) {
     const image = await Image.findOrFail(id)
     try {
       let filePath = Helpers.publicPath(`uploads/${image.path}`)
